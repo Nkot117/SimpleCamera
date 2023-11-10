@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">SimpleCamera</string>
+    <string name="take_photo">写真を撮る</string>
+    <string name="start_video">録画を開始</string>
+    <string name="end_video">録画を終了</string>
 </resources>
