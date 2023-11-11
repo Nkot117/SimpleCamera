@@ -33,8 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cameraXExecutors: ExecutorService
 
     private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
-
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             if (allPermissionGranted()) {
                 // カメラ起動
             } else {
