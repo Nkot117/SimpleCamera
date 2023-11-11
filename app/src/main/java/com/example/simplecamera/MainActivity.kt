@@ -4,14 +4,19 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.core.content.ContextCompat
 import com.example.simplecamera.databinding.ActivityMainBinding
+import java.lang.Exception
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -33,7 +38,7 @@ class MainActivity : AppCompatActivity() {
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             if (allPermissionGranted()) {
-                // カメラ起動
+                startCamera()
             } else {
                 Toast.makeText(this, "アプリの使用には権限の許可が必要です", Toast.LENGTH_LONG).show()
             }
@@ -46,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         if (allPermissionGranted()) {
-            // カメラ起動
+            startCamera()
         } else {
             requestPermissionLauncher.launch(REQUEST_PERMISSION)
         }
@@ -77,6 +82,29 @@ class MainActivity : AppCompatActivity() {
                     this,
                     android.Manifest.permission.RECORD_AUDIO
                 ) == PackageManager.PERMISSION_GRANTED
+
+    private fun startCamera() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+
+        cameraProviderFuture.addListener({
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(binding.preview.surfaceProvider)
+            }
+
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview)
+
+            } catch (e: Exception) {
+                Log.e("SimpleCamera", "Use case binding failed", e)
+
+            }
+        }, ContextCompat.getMainExecutor(this))
+    }
 
     companion object {
         private val REQUEST_PERMISSION = mutableListOf(
