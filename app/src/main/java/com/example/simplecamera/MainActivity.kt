@@ -1,14 +1,18 @@
 package com.example.simplecamera
 
+import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
+import android.provider.MediaStore.Audio.Media
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
@@ -17,6 +21,8 @@ import androidx.camera.video.VideoCapture
 import androidx.core.content.ContextCompat
 import com.example.simplecamera.databinding.ActivityMainBinding
 import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -57,7 +63,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.imageCaptureButton.setOnClickListener {
-
+            takePhoto()
         }
 
         binding.videoCaptureButton.setOnClickListener {
@@ -93,20 +99,59 @@ class MainActivity : AppCompatActivity() {
                 it.setSurfaceProvider(binding.preview.surfaceProvider)
             }
 
+            imageCapture = ImageCapture.Builder()
+                .build()
+
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview)
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
 
-            } catch (e: Exception) {
-                Log.e("SimpleCamera", "Use case binding failed", e)
+            } catch (exception: Exception) {
+                Log.e("SimpleCamera", "Use case binding failed", exception)
 
             }
         }, ContextCompat.getMainExecutor(this))
     }
 
+    private fun  takePhoto() {
+        val imageCapture = imageCapture ?: return
+
+        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.getDefault()).format(System.currentTimeMillis())
+        val contentValue = ContentValues().also {
+            it.put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            it.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+                it.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/SimpleCamera-Image")
+            }
+        }
+
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(
+            contentResolver,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            contentValue
+        ).build()
+
+        imageCapture.takePicture(
+            outputOptions,
+            ContextCompat.getMainExecutor(this),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exception: ImageCaptureException) {
+                    Log.e("SimpleCamera", "Photo capture failed: ${exception.message}", exception)
+                }
+
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    val message = "Photo capture succeeded: ${outputFileResults.savedUri}"
+                    Toast.makeText(baseContext, message, Toast.LENGTH_SHORT).show()
+                    Log.e("SimpleCamera", message)
+                }
+            }
+        )
+    }
+
     companion object {
+        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private val REQUEST_PERMISSION = mutableListOf(
             android.Manifest.permission.CAMERA,
             android.Manifest.permission.RECORD_AUDIO
