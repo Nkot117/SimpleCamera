@@ -1,6 +1,5 @@
 package com.example.simplecamera
 
-import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -13,7 +12,6 @@ import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.core.content.ContextCompat
 import com.example.simplecamera.databinding.ActivityMainBinding
-import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
