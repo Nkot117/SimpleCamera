@@ -6,7 +6,6 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
-import android.provider.MediaStore.Audio.Media
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -63,7 +62,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.imageCaptureButton.setOnClickListener {
-            takePhoto()
+            takePicture()
         }
 
         binding.videoCaptureButton.setOnClickListener {
@@ -79,15 +78,12 @@ class MainActivity : AppCompatActivity() {
         cameraXExecutors.shutdown()
     }
 
-    private fun allPermissionGranted() =
+    private fun allPermissionGranted() = REQUEST_PERMISSION.all {
         ContextCompat.checkSelfPermission(
-            this,
-            android.Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(
-                    this,
-                    android.Manifest.permission.RECORD_AUDIO
-                ) == PackageManager.PERMISSION_GRANTED
+            this@MainActivity,
+            it
+        ) == PackageManager.PERMISSION_GRANTED
+    }
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
@@ -95,19 +91,24 @@ class MainActivity : AppCompatActivity() {
         cameraProviderFuture.addListener({
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(binding.preview.surfaceProvider)
-            }
+            val preview = Preview.Builder()
+                .build()
+                .also {
+                    it.setSurfaceProvider(binding.preview.surfaceProvider)
+                }
 
+            // TODO: 撮影時のオプションを検討
             imageCapture = ImageCapture.Builder()
                 .build()
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
+                // カメラがバインドされている場合、バインドを解除
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
 
+                // ライフサイクルにカメラをバインド
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
             } catch (exception: Exception) {
                 Log.e("SimpleCamera", "Use case binding failed", exception)
 
@@ -115,23 +116,9 @@ class MainActivity : AppCompatActivity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
-    private fun  takePhoto() {
+    private fun takePicture() {
         val imageCapture = imageCapture ?: return
-
-        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.getDefault()).format(System.currentTimeMillis())
-        val contentValue = ContentValues().also {
-            it.put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            it.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                it.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/SimpleCamera-Image")
-            }
-        }
-
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(
-            contentResolver,
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            contentValue
-        ).build()
+        val outputOptions = createOutputOptions()
 
         imageCapture.takePicture(
             outputOptions,
@@ -148,6 +135,27 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         )
+    }
+
+    private fun createOutputOptions(): ImageCapture.OutputFileOptions {
+        val name = SimpleDateFormat(
+            FILENAME_FORMAT,
+            Locale.getDefault()
+        ).format(System.currentTimeMillis())
+
+        val contentValue = ContentValues().also {
+            it.put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            it.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+                it.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/SimpleCamera-Image")
+            }
+        }
+
+        return ImageCapture.OutputFileOptions.Builder(
+            contentResolver,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            contentValue
+        ).build()
     }
 
     companion object {
