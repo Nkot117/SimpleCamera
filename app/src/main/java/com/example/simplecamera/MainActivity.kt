@@ -47,10 +47,13 @@ class MainActivity : AppCompatActivity() {
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-            if (allPermissionGranted()) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                // カメラの権限が許可が取れている場合、カメラ機能を開始
                 startCamera()
             } else {
-                Toast.makeText(this, "アプリの使用には権限の許可が必要です", Toast.LENGTH_LONG).show()
+                // TODO: ダイアログで表示する
+                Toast.makeText(this, "アプリの使用にはカメラの権限の許可が必要です", Toast.LENGTH_LONG).show()
+                finish()
             }
         }
 
