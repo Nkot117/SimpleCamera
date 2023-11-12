@@ -6,7 +6,6 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
-import android.provider.MediaStore.Images.Media
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,7 +23,6 @@ import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker
 import com.example.simplecamera.databinding.ActivityMainBinding
 import java.lang.Exception
 import java.text.SimpleDateFormat
@@ -125,7 +123,13 @@ class MainActivity : AppCompatActivity() {
                 cameraProvider.unbindAll()
 
                 // ライフサイクルにカメラをバインド
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, videoCapture)
+                cameraProvider.bindToLifecycle(
+                    this,
+                    cameraSelector,
+                    preview,
+                    imageCapture,
+                    videoCapture
+                )
             } catch (exception: Exception) {
                 Log.e("SimpleCamera", "Use case binding failed", exception)
 
@@ -135,7 +139,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun takePicture() {
         val imageCapture = this.imageCapture ?: return
-        val outputOptions = createOutputOptions()
+        val outputOptions = createPhotoOutputOptions()
 
         imageCapture.takePicture(
             outputOptions,
@@ -147,14 +151,14 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     val message = "Photo capture succeeded: ${outputFileResults.savedUri}"
-                    Toast.makeText(baseContext, message, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                     Log.e("SimpleCamera", message)
                 }
             }
         )
     }
 
-    private fun createOutputOptions(): ImageCapture.OutputFileOptions {
+    private fun createPhotoOutputOptions(): ImageCapture.OutputFileOptions {
         val name = SimpleDateFormat(
             FILENAME_FORMAT,
             Locale.getDefault()
@@ -178,8 +182,6 @@ class MainActivity : AppCompatActivity() {
     private fun captureVideo() {
         val videoCapture = this.videoCapture ?: return
 
-        binding.videoCaptureButton.isEnabled = false
-
         val curRecording = recording
 
         if (curRecording != null) {
@@ -188,29 +190,17 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val name =
-            SimpleDateFormat(FILENAME_FORMAT, Locale.JAPAN).format(System.currentTimeMillis())
-        val contentValues = ContentValues().also {
-            it.put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            it.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                it.put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/SimpleCamera-Video")
-            }
-        }
+        binding.videoCaptureButton.isEnabled = false
 
-        val mediaStoreOutputOptions = MediaStoreOutputOptions.Builder(
-            contentResolver,
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-        )
-            .setContentValues(contentValues)
-            .build()
+        val mediaStoreOutputOptions = createVideoOutputOptions()
 
         recording = videoCapture.output.prepareRecording(this, mediaStoreOutputOptions).also {
-            if (PermissionChecker.checkSelfPermission(
+            if (ContextCompat.checkSelfPermission(
                     this@MainActivity,
                     android.Manifest.permission.RECORD_AUDIO
-                ) == PermissionChecker.PERMISSION_GRANTED
+                ) == PackageManager.PERMISSION_GRANTED
             ) {
+                // 録音を有効化
                 it.withAudioEnabled()
             }
         }.start(ContextCompat.getMainExecutor(this)) { recordEvent ->
@@ -223,19 +213,19 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 is VideoRecordEvent.Finalize -> {
-                    if (!recordEvent.hasError()) {
-                        val message = "Video capture succeeded: " +
-                                "${recordEvent.outputResults.outputUri}"
-                        Toast.makeText(baseContext, message, Toast.LENGTH_SHORT)
-                            .show()
-                        Log.e("SimpleCamera", message)
-                    } else {
+                    if (recordEvent.hasError()) {
                         recording?.close()
                         recording = null
                         Log.e(
                             "SimpleCamera", "Video capture ends with error: " +
                                     "${recordEvent.error}"
                         )
+                    } else {
+                        val message = "Video capture succeeded: " +
+                                "${recordEvent.outputResults.outputUri}"
+                        Toast.makeText(this, message, Toast.LENGTH_SHORT)
+                            .show()
+                        Log.e("SimpleCamera", message)
                     }
                     binding.videoCaptureButton.also {
                         it.text = getString(R.string.start_video)
@@ -244,7 +234,25 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
 
+    private fun createVideoOutputOptions(): MediaStoreOutputOptions {
+        val name =
+            SimpleDateFormat(FILENAME_FORMAT, Locale.JAPAN).format(System.currentTimeMillis())
+        val contentValues = ContentValues().also {
+            it.put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            it.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+                it.put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/SimpleCamera-Video")
+            }
+        }
+
+        return MediaStoreOutputOptions.Builder(
+            contentResolver,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        )
+            .setContentValues(contentValues)
+            .build()
     }
 
     companion object {
