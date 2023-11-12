@@ -63,10 +63,10 @@ class MainActivity : AppCompatActivity() {
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        if (allPermissionGranted()) {
+        if (allPermissionsGranted()) {
             startCamera()
         } else {
-            requestPermissionLauncher.launch(REQUEST_PERMISSION)
+            requestPermissionLauncher.launch(REQUEST_PERMISSIONS)
         }
 
         binding.imageCaptureButton.setOnClickListener {
@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         cameraXExecutors.shutdown()
     }
 
-    private fun allPermissionGranted() = REQUEST_PERMISSION.all {
+    private fun allPermissionsGranted() = REQUEST_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(
             this@MainActivity,
             it
@@ -260,7 +260,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
-        private val REQUEST_PERMISSION = mutableListOf(
+        private val REQUEST_PERMISSIONS = mutableListOf(
             android.Manifest.permission.CAMERA,
             android.Manifest.permission.RECORD_AUDIO
         ).also {
