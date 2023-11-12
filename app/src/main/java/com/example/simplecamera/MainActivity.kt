@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.MediaStore.Images.Media
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,10 +15,15 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.MediaStoreOutputOptions
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
+import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker
 import com.example.simplecamera.databinding.ActivityMainBinding
 import java.lang.Exception
 import java.text.SimpleDateFormat
@@ -66,7 +72,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.videoCaptureButton.setOnClickListener {
-
+            captureVideo()
         }
 
         cameraXExecutors = Executors.newSingleThreadExecutor()
@@ -101,6 +107,11 @@ class MainActivity : AppCompatActivity() {
             imageCapture = ImageCapture.Builder()
                 .build()
 
+            val recorder = Recorder.Builder()
+                .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
+                .build()
+            videoCapture = VideoCapture.withOutput(recorder)
+
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
@@ -108,7 +119,7 @@ class MainActivity : AppCompatActivity() {
                 cameraProvider.unbindAll()
 
                 // ライフサイクルにカメラをバインド
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, videoCapture)
             } catch (exception: Exception) {
                 Log.e("SimpleCamera", "Use case binding failed", exception)
 
@@ -117,7 +128,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun takePicture() {
-        val imageCapture = imageCapture ?: return
+        val imageCapture = this.imageCapture ?: return
         val outputOptions = createOutputOptions()
 
         imageCapture.takePicture(
@@ -156,6 +167,78 @@ class MainActivity : AppCompatActivity() {
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             contentValue
         ).build()
+    }
+
+    private fun captureVideo() {
+        val videoCapture = this.videoCapture ?: return
+
+        binding.videoCaptureButton.isEnabled = false
+
+        val curRecording = recording
+
+        if (curRecording != null) {
+            curRecording.stop()
+            recording = null
+            return
+        }
+
+        val name =
+            SimpleDateFormat(FILENAME_FORMAT, Locale.JAPAN).format(System.currentTimeMillis())
+        val contentValues = ContentValues().also {
+            it.put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            it.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+                it.put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/SimpleCamera-Video")
+            }
+        }
+
+        val mediaStoreOutputOptions = MediaStoreOutputOptions.Builder(
+            contentResolver,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        )
+            .setContentValues(contentValues)
+            .build()
+
+        recording = videoCapture.output.prepareRecording(this, mediaStoreOutputOptions).also {
+            if (PermissionChecker.checkSelfPermission(
+                    this@MainActivity,
+                    android.Manifest.permission.RECORD_AUDIO
+                ) == PermissionChecker.PERMISSION_GRANTED
+            ) {
+                it.withAudioEnabled()
+            }
+        }.start(ContextCompat.getMainExecutor(this)) { recordEvent ->
+            when (recordEvent) {
+                is VideoRecordEvent.Start -> {
+                    binding.videoCaptureButton.also {
+                        it.text = getString(R.string.end_video)
+                        it.isEnabled = true
+                    }
+                }
+
+                is VideoRecordEvent.Finalize -> {
+                    if (!recordEvent.hasError()) {
+                        val message = "Video capture succeeded: " +
+                                "${recordEvent.outputResults.outputUri}"
+                        Toast.makeText(baseContext, message, Toast.LENGTH_SHORT)
+                            .show()
+                        Log.e("SimpleCamera", message)
+                    } else {
+                        recording?.close()
+                        recording = null
+                        Log.e(
+                            "SimpleCamera", "Video capture ends with error: " +
+                                    "${recordEvent.error}"
+                        )
+                    }
+                    binding.videoCaptureButton.also {
+                        it.text = getString(R.string.start_video)
+                        it.isEnabled = true
+                    }
+                }
+            }
+        }
+
     }
 
     companion object {
