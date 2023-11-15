@@ -30,24 +30,15 @@
         app:layout_constraintTop_toBottomOf="@id/horizontal_centerline" />
 
     <Button
-        android:id="@+id/image_capture_button"
+        android:id="@+id/execute_button"
         android:layout_width="110dp"
         android:layout_height="110dp"
-        android:layout_marginStart="50dp"
         android:layout_marginBottom="50dp"
         android:text="@string/take_photo"
         app:layout_constraintStart_toStartOf="@id/button_area"
-        app:layout_constraintTop_toTopOf="@id/button_area" />
-
-    <Button
-        android:id="@+id/video_capture_button"
-        android:layout_width="110dp"
-        android:layout_height="110dp"
-        android:layout_marginEnd="50dp"
-        android:layout_marginBottom="50dp"
-        android:text="@string/start_video"
+        app:layout_constraintTop_toTopOf="@id/button_area"
         app:layout_constraintEnd_toEndOf="@id/button_area"
-        app:layout_constraintTop_toTopOf="@id/button_area" />
+        />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/vertical_centerline"

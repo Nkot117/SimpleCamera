@@ -45,6 +45,9 @@ class MainActivity : AppCompatActivity() {
     // Camera
     private lateinit var cameraXExecutors: ExecutorService
 
+    // Mode
+    private var selectedCameraMode: CameraMode = CameraMode.Photo
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -69,13 +72,20 @@ class MainActivity : AppCompatActivity() {
             requestPermissionLauncher.launch(REQUEST_PERMISSIONS)
         }
 
-        binding.imageCaptureButton.setOnClickListener {
-            takePicture()
+        binding.executeButton.setOnClickListener{
+            if(selectedCameraMode == CameraMode.Photo) {
+                takePicture()
+            } else {
+                captureVideo()
+            }
         }
-
-        binding.videoCaptureButton.setOnClickListener {
-            captureVideo()
-        }
+//        binding.imageCaptureButton.setOnClickListener {
+//            takePicture()
+//        }
+//
+//        binding.videoCaptureButton.setOnClickListener {
+//            captureVideo()
+//        }
 
         cameraXExecutors = Executors.newSingleThreadExecutor()
     }
@@ -193,7 +203,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        binding.videoCaptureButton.isEnabled = false
+//        binding.videoCaptureButton.isEnabled = false
 
         val mediaStoreOutputOptions = createVideoOutputOptions()
 
@@ -209,10 +219,10 @@ class MainActivity : AppCompatActivity() {
         }.start(ContextCompat.getMainExecutor(this)) { recordEvent ->
             when (recordEvent) {
                 is VideoRecordEvent.Start -> {
-                    binding.videoCaptureButton.also {
-                        it.text = getString(R.string.end_video)
-                        it.isEnabled = true
-                    }
+//                    binding.videoCaptureButton.also {
+//                        it.text = getString(R.string.end_video)
+//                        it.isEnabled = true
+//                    }
                 }
 
                 is VideoRecordEvent.Finalize -> {
@@ -230,10 +240,10 @@ class MainActivity : AppCompatActivity() {
                             .show()
                         Log.e("SimpleCamera", message)
                     }
-                    binding.videoCaptureButton.also {
-                        it.text = getString(R.string.start_video)
-                        it.isEnabled = true
-                    }
+//                    binding.videoCaptureButton.also {
+//                        it.text = getString(R.string.start_video)
+//                        it.isEnabled = true
+//                    }
                 }
             }
         }
