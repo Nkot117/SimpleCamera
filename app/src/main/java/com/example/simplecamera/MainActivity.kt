@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -23,6 +25,7 @@ import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
+import androidx.core.view.GestureDetectorCompat
 import com.example.simplecamera.databinding.ActivityMainBinding
 import java.lang.Exception
 import java.text.SimpleDateFormat
@@ -48,9 +51,16 @@ class MainActivity : AppCompatActivity() {
     // Mode
     private var selectedCameraMode: CameraMode = CameraMode.Photo
 
+    // ジェスチャー検出
+    private lateinit var gestureDetector: GestureDetectorCompat
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
                 // カメラの権限が許可が取れている場合、カメラ機能を開始
                 startCamera()
             } else {
@@ -60,11 +70,37 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        gestureDetector =
+            GestureDetectorCompat(this, object : GestureDetector.SimpleOnGestureListener() {
+                override fun onFling(
+                    e1: MotionEvent?, // e1 ： フリック開始座標（起点）
+                    e2: MotionEvent,  // e2 ： 現在のフリック座標
+                    velocityX: Float, // velocityX ： 横方向の加速度
+                    velocityY: Float  // velocityY ： 縦方向の加速度
+                ): Boolean {
+                    val distance = e1?.x?.minus(e2.x)?.toInt() ?: 0
+                    Log.d("DEBUG_TAG", distance.toString())
+                    Log.d("DEBUG_TAG", Math.abs(distance).toString())
+                    if (Math.abs(distance) <= SWIPE_EVENT_MIN_DISTANCE) {
+                        return true
+                    }
+
+                    selectedCameraMode = if (distance > 0) {
+                        Log.d("DEBUG_TAG", "左へスワイプ：Photoモード")
+                        CameraMode.Photo
+                    } else {
+                        Log.d("DEBUG_TAG", "右へスワイプ：Videoモード")
+                        CameraMode.Video
+                    }
+
+                    return super.onFling(e1, e2, velocityX, velocityY)
+                }
+            })
 
         if (allPermissionsGranted()) {
             startCamera()
@@ -72,22 +108,19 @@ class MainActivity : AppCompatActivity() {
             requestPermissionLauncher.launch(REQUEST_PERMISSIONS)
         }
 
-        binding.executeButton.setOnClickListener{
-            if(selectedCameraMode == CameraMode.Photo) {
+        binding.executeButton.setOnClickListener {
+            if (selectedCameraMode == CameraMode.Photo) {
                 takePicture()
             } else {
                 captureVideo()
             }
         }
-//        binding.imageCaptureButton.setOnClickListener {
-//            takePicture()
-//        }
-//
-//        binding.videoCaptureButton.setOnClickListener {
-//            captureVideo()
-//        }
-
         cameraXExecutors = Executors.newSingleThreadExecutor()
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        gestureDetector.onTouchEvent(event)
+        return super.onTouchEvent(event)
     }
 
     override fun onDestroy() {
@@ -269,6 +302,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val SWIPE_EVENT_MIN_DISTANCE = 100
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private val REQUEST_PERMISSIONS = mutableListOf(
             android.Manifest.permission.CAMERA,
