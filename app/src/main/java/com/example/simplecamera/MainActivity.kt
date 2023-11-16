@@ -239,8 +239,6 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-//        binding.videoCaptureButton.isEnabled = false
-
         val mediaStoreOutputOptions = createVideoOutputOptions()
 
         recording = videoCapture.output.prepareRecording(this, mediaStoreOutputOptions).also {
@@ -255,10 +253,7 @@ class MainActivity : AppCompatActivity() {
         }.start(ContextCompat.getMainExecutor(this)) { recordEvent ->
             when (recordEvent) {
                 is VideoRecordEvent.Start -> {
-//                    binding.videoCaptureButton.also {
-//                        it.text = getString(R.string.end_video)
-//                        it.isEnabled = true
-//                    }
+
                 }
 
                 is VideoRecordEvent.Finalize -> {
@@ -276,10 +271,6 @@ class MainActivity : AppCompatActivity() {
                             .show()
                         Log.e("SimpleCamera", message)
                     }
-//                    binding.videoCaptureButton.also {
-//                        it.text = getString(R.string.start_video)
-//                        it.isEnabled = true
-//                    }
                 }
             }
         }
