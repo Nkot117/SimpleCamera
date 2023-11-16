@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="false">
+        <layer-list>
+            <item>
+                <shape android:shape="oval">
+                    <size android:width="50dp" android:height="50dp" />
+                    <solid android:color="#fefefe" />
+                </shape>
+            </item>
+            <item android:width="38dp" android:height="38dp" android:drawable="@drawable/icon_camera" android:gravity="center" />
+        </layer-list>
+    </item>
+
+    <item android:state_checked="true">
+        <layer-list>
+            <item>
+                <shape android:shape="oval">
+                    <size android:width="50dp" android:height="50dp" />
+                    <solid android:color="#fefefe" />
+                </shape>
+            </item>
+            <item android:width="38dp" android:height="38dp" android:drawable="@drawable/icon_video" android:gravity="center" />
+        </layer-list>
+    </item>
+
+</selector>

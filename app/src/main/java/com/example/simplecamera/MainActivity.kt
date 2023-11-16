@@ -108,6 +108,15 @@ class MainActivity : AppCompatActivity() {
                 captureVideo()
             }
         }
+
+        binding.cameraModeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            selectedCameraMode = if (isChecked) {
+                CameraMode.Video
+            } else {
+                CameraMode.Photo
+            }
+        }
+
         cameraXExecutors = Executors.newSingleThreadExecutor()
     }
 
@@ -179,9 +188,11 @@ class MainActivity : AppCompatActivity() {
     private fun changeCameraMode(distance: Int) {
         selectedCameraMode = if (distance > 0) {
             Log.d("DEBUG_TAG", "左へスワイプ：Photoモード")
+            binding.cameraModeSwitch.isChecked = false
             CameraMode.Photo
         } else {
             Log.d("DEBUG_TAG", "右へスワイプ：Videoモード")
+            binding.cameraModeSwitch.isChecked = true
             CameraMode.Video
         }
     }

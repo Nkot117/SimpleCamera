@@ -40,6 +40,18 @@
         app:layout_constraintEnd_toEndOf="@id/button_area"
         />
 
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/camera_mode_switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:switchMinWidth="110dp"
+        android:layout_marginBottom="25dp"
+        android:thumb="@drawable/switch_camera_thumb"
+        app:layout_constraintBottom_toBottomOf="@+id/button_area"
+        app:layout_constraintStart_toStartOf="@id/button_area"
+        app:layout_constraintEnd_toEndOf="@+id/button_area"
+        />
+
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/vertical_centerline"
         android:layout_width="wrap_content"
