@@ -84,19 +84,12 @@ class MainActivity : AppCompatActivity() {
                     velocityY: Float  // velocityY ： 縦方向の加速度
                 ): Boolean {
                     val distance = e1?.x?.minus(e2.x)?.toInt() ?: 0
-                    Log.d("DEBUG_TAG", distance.toString())
-                    Log.d("DEBUG_TAG", Math.abs(distance).toString())
+
                     if (Math.abs(distance) <= SWIPE_EVENT_MIN_DISTANCE) {
                         return true
                     }
 
-                    selectedCameraMode = if (distance > 0) {
-                        Log.d("DEBUG_TAG", "左へスワイプ：Photoモード")
-                        CameraMode.Photo
-                    } else {
-                        Log.d("DEBUG_TAG", "右へスワイプ：Videoモード")
-                        CameraMode.Video
-                    }
+                    changeCameraMode(distance)
 
                     return super.onFling(e1, e2, velocityX, velocityY)
                 }
@@ -181,6 +174,16 @@ class MainActivity : AppCompatActivity() {
 
             }
         }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun changeCameraMode(distance: Int) {
+        selectedCameraMode = if (distance > 0) {
+            Log.d("DEBUG_TAG", "左へスワイプ：Photoモード")
+            CameraMode.Photo
+        } else {
+            Log.d("DEBUG_TAG", "右へスワイプ：Videoモード")
+            CameraMode.Video
+        }
     }
 
     private fun takePicture() {
