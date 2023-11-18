@@ -1,11 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item>
+    <item android:state_checked="false">
         <layer-list>
             <item>
                 <shape android:shape="rectangle">
                     <corners android:radius="30dp" />
-                    <solid android:color="#7C7C7C" />
+                    <solid android:color="@color/photo_mode" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <item android:state_checked="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="30dp" />
+                    <solid android:color="@color/video_mode" />
                 </shape>
             </item>
         </layer-list>

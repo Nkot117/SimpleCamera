@@ -264,10 +264,11 @@ class MainActivity : AppCompatActivity() {
         }.start(ContextCompat.getMainExecutor(this)) { recordEvent ->
             when (recordEvent) {
                 is VideoRecordEvent.Start -> {
-
+                    binding.executeButton.setBackgroundColor(getColor(R.color.video_mode))
                 }
 
                 is VideoRecordEvent.Finalize -> {
+                    binding.executeButton.setBackgroundColor(getColor(R.color.photo_mode))
                     if (recordEvent.hasError()) {
                         recording?.close()
                         recording = null

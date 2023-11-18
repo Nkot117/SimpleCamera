@@ -6,4 +6,7 @@
     <color name="colorSecondary">#004D40</color>
     <color name="colorSecondaryVariant">#26A69A</color>
 
+    <!-- カメラ機能関連 -->
+    <color name="photo_mode">#7C7C7C</color>
+    <color name="video_mode">#C64D4D</color>
 </resources>

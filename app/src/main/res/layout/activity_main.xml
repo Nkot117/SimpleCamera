@@ -12,7 +12,7 @@
         android:layout_height="match_parent" />
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/horizontal_centerline"
+        android:id="@+id/horizontal_center_line"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -27,14 +27,16 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/horizontal_centerline" />
+        app:layout_constraintTop_toBottomOf="@id/horizontal_center_line" />
 
     <Button
         android:id="@+id/execute_button"
-        android:layout_width="110dp"
-        android:layout_height="110dp"
+        android:layout_width="70dp"
+        android:layout_height="80dp"
         android:layout_marginBottom="50dp"
-        android:text="@string/take_photo"
+        android:layout_marginTop="15dp"
+        android:backgroundTint="@color/photo_mode"
+        app:cornerRadius="60dp"
         app:layout_constraintStart_toStartOf="@id/button_area"
         app:layout_constraintTop_toTopOf="@id/button_area"
         app:layout_constraintEnd_toEndOf="@id/button_area"
@@ -54,7 +56,7 @@
         />
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/vertical_centerline"
+        android:id="@+id/vertical_center_line"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
