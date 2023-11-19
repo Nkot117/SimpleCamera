@@ -3,6 +3,7 @@ package com.example.simplecamera
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.SoundPool
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -227,6 +228,9 @@ class MainActivity : AppCompatActivity() {
         val imageCapture = this.imageCapture ?: return
         val outputOptions = createPhotoOutputOptions()
 
+        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 13, 0)
+
         soundPool.play(takePictureSound, 1.0f, 1.0f, 0, 0, 1.0f)
 
         imageCapture.takePicture(
@@ -279,6 +283,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         val mediaStoreOutputOptions = createVideoOutputOptions()
+
+        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 13, 0)
 
         soundPool.play(captureVideoStartSound,  1.0f, 1.0f, 1, 0, 1.0f)
 
