@@ -2,6 +2,8 @@ package com.example.simplecamera
 
 import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -53,6 +55,16 @@ class MainActivity : AppCompatActivity() {
 
     // ジェスチャー検出
     private lateinit var gestureDetector: GestureDetectorCompat
+
+    // soundPool
+    private lateinit var soundPool: SoundPool
+
+    // シャッター音
+    private var takePictureSound = 0
+
+    // 録画音
+    private var captureVideoStartSound = 0
+    private var captureVideoEndSound = 0
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -118,6 +130,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         cameraXExecutors = Executors.newSingleThreadExecutor()
+
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
+
+        soundPool = SoundPool.Builder()
+            .setAudioAttributes(audioAttributes)
+            .setMaxStreams(3).build()
+
+
+        takePictureSound = soundPool.load(this, R.raw.take_picture_sound, 1)
+        captureVideoStartSound = soundPool.load(this, R.raw.capture_video_start_sound, 2)
+        captureVideoEndSound = soundPool.load(this, R.raw.capture_video_end_sound, 3)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -129,6 +154,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         _binding = null
         cameraXExecutors.shutdown()
+        soundPool.release()
     }
 
     private fun allPermissionsGranted() = REQUEST_PERMISSIONS.all {
@@ -201,6 +227,8 @@ class MainActivity : AppCompatActivity() {
         val imageCapture = this.imageCapture ?: return
         val outputOptions = createPhotoOutputOptions()
 
+        soundPool.play(takePictureSound, 1.0f, 1.0f, 0, 0, 1.0f)
+
         imageCapture.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(this),
@@ -252,6 +280,8 @@ class MainActivity : AppCompatActivity() {
 
         val mediaStoreOutputOptions = createVideoOutputOptions()
 
+        soundPool.play(captureVideoStartSound,  1.0f, 1.0f, 1, 0, 1.0f)
+
         recording = videoCapture.output.prepareRecording(this, mediaStoreOutputOptions).also {
             if (ContextCompat.checkSelfPermission(
                     this@MainActivity,
@@ -269,6 +299,9 @@ class MainActivity : AppCompatActivity() {
 
                 is VideoRecordEvent.Finalize -> {
                     binding.executeButton.setBackgroundColor(getColor(R.color.photo_mode))
+
+                    soundPool.play(captureVideoEndSound,  1.0f, 1.0f, 1, 0, 1.0f)
+
                     if (recordEvent.hasError()) {
                         recording?.close()
                         recording = null
