@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
     // ジェスチャー検出
     private lateinit var gestureDetector: GestureDetectorCompat
 
-    // soundPool
+    // SoundPool
     private lateinit var soundPool: SoundPool
 
     // シャッター音
@@ -66,6 +66,12 @@ class MainActivity : AppCompatActivity() {
     // 録画音
     private var captureVideoStartSound = 0
     private var captureVideoEndSound = 0
+
+    // AudioManager
+    private lateinit var audioManager: AudioManager
+
+    // デフォルトに設定されていた音量
+    private var defaultSoundVolume = 0
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -144,6 +150,9 @@ class MainActivity : AppCompatActivity() {
         takePictureSound = soundPool.load(this, R.raw.take_picture_sound, 1)
         captureVideoStartSound = soundPool.load(this, R.raw.capture_video_start_sound, 2)
         captureVideoEndSound = soundPool.load(this, R.raw.capture_video_end_sound, 3)
+
+        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        defaultSoundVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -228,9 +237,7 @@ class MainActivity : AppCompatActivity() {
         val imageCapture = this.imageCapture ?: return
         val outputOptions = createPhotoOutputOptions()
 
-        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 13, 0)
-
         soundPool.play(takePictureSound, 1.0f, 1.0f, 0, 0, 1.0f)
 
         imageCapture.takePicture(
@@ -239,11 +246,13 @@ class MainActivity : AppCompatActivity() {
             object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exception: ImageCaptureException) {
                     Log.e("SimpleCamera", "Photo capture failed: ${exception.message}", exception)
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
                 }
 
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     val message = "Photo capture succeeded: ${outputFileResults.savedUri}"
                     Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
                     Log.e("SimpleCamera", message)
                 }
             }
@@ -323,6 +332,8 @@ class MainActivity : AppCompatActivity() {
                             .show()
                         Log.e("SimpleCamera", message)
                     }
+
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
                 }
             }
         }
