@@ -94,6 +94,56 @@ class MainActivity : AppCompatActivity() {
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setGestureDetector()
+
+        if (allPermissionsGranted()) {
+            startCamera()
+        } else {
+            requestPermissionLauncher.launch(REQUEST_PERMISSIONS)
+        }
+        cameraXExecutors = Executors.newSingleThreadExecutor()
+
+        setButtonListener()
+
+        initSoundPool()
+
+        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        defaultSoundVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+    }
+
+    private fun initSoundPool() {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
+
+        soundPool = SoundPool.Builder()
+            .setAudioAttributes(audioAttributes)
+            .setMaxStreams(3).build()
+
+        takePictureSound = soundPool.load(this, R.raw.take_picture_sound, 1)
+        captureVideoStartSound = soundPool.load(this, R.raw.capture_video_start_sound, 2)
+        captureVideoEndSound = soundPool.load(this, R.raw.capture_video_end_sound, 3)
+    }
+
+    private fun setButtonListener() {
+        binding.executeButton.setOnClickListener {
+            if (selectedCameraMode == CameraMode.Photo) {
+                takePicture()
+            } else {
+                captureVideo()
+            }
+        }
+
+        binding.cameraModeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            selectedCameraMode = if (isChecked) {
+                CameraMode.Video
+            } else {
+                CameraMode.Photo
+            }
+        }
+    }
+
+    private fun setGestureDetector() {
         gestureDetector =
             GestureDetectorCompat(this, object : GestureDetector.SimpleOnGestureListener() {
                 override fun onFling(
@@ -113,46 +163,6 @@ class MainActivity : AppCompatActivity() {
                     return super.onFling(e1, e2, velocityX, velocityY)
                 }
             })
-
-        if (allPermissionsGranted()) {
-            startCamera()
-        } else {
-            requestPermissionLauncher.launch(REQUEST_PERMISSIONS)
-        }
-
-        binding.executeButton.setOnClickListener {
-            if (selectedCameraMode == CameraMode.Photo) {
-                takePicture()
-            } else {
-                captureVideo()
-            }
-        }
-
-        binding.cameraModeSwitch.setOnCheckedChangeListener { _, isChecked ->
-            selectedCameraMode = if (isChecked) {
-                CameraMode.Video
-            } else {
-                CameraMode.Photo
-            }
-        }
-
-        cameraXExecutors = Executors.newSingleThreadExecutor()
-
-        val audioAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_MEDIA)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
-
-        soundPool = SoundPool.Builder()
-            .setAudioAttributes(audioAttributes)
-            .setMaxStreams(3).build()
-
-
-        takePictureSound = soundPool.load(this, R.raw.take_picture_sound, 1)
-        captureVideoStartSound = soundPool.load(this, R.raw.capture_video_start_sound, 2)
-        captureVideoEndSound = soundPool.load(this, R.raw.capture_video_end_sound, 3)
-
-        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        defaultSoundVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -237,8 +247,7 @@ class MainActivity : AppCompatActivity() {
         val imageCapture = this.imageCapture ?: return
         val outputOptions = createPhotoOutputOptions()
 
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 13, 0)
-        soundPool.play(takePictureSound, 1.0f, 1.0f, 0, 0, 1.0f)
+        playSound()
 
         imageCapture.takePicture(
             outputOptions,
@@ -293,10 +302,7 @@ class MainActivity : AppCompatActivity() {
 
         val mediaStoreOutputOptions = createVideoOutputOptions()
 
-        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 13, 0)
-
-        soundPool.play(captureVideoStartSound,  1.0f, 1.0f, 1, 0, 1.0f)
+        playSound()
 
         recording = videoCapture.output.prepareRecording(this, mediaStoreOutputOptions).also {
             if (ContextCompat.checkSelfPermission(
@@ -316,7 +322,7 @@ class MainActivity : AppCompatActivity() {
                 is VideoRecordEvent.Finalize -> {
                     binding.executeButton.setBackgroundColor(getColor(R.color.photo_mode))
 
-                    soundPool.play(captureVideoEndSound,  1.0f, 1.0f, 1, 0, 1.0f)
+                    soundPool.play(captureVideoEndSound, 1.0f, 1.0f, 1, 0, 1.0f)
 
                     if (recordEvent.hasError()) {
                         recording?.close()
@@ -356,6 +362,16 @@ class MainActivity : AppCompatActivity() {
         )
             .setContentValues(contentValues)
             .build()
+    }
+
+    private fun playSound() {
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 13, 0)
+
+        if (selectedCameraMode == CameraMode.Photo) {
+            soundPool.play(takePictureSound, 1.0f, 1.0f, 0, 0, 1.0f)
+        } else {
+            soundPool.play(captureVideoStartSound, 1.0f, 1.0f, 1, 0, 1.0f)
+        }
     }
 
     companion object {
