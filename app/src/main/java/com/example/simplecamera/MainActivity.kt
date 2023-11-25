@@ -2,6 +2,9 @@ package com.example.simplecamera
 
 import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.SoundPool
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -54,6 +57,22 @@ class MainActivity : AppCompatActivity() {
     // ジェスチャー検出
     private lateinit var gestureDetector: GestureDetectorCompat
 
+    // SoundPool
+    private lateinit var soundPool: SoundPool
+
+    // シャッター音
+    private var takePictureSound = 0
+
+    // 録画音
+    private var captureVideoStartSound = 0
+    private var captureVideoEndSound = 0
+
+    // AudioManager
+    private lateinit var audioManager: AudioManager
+
+    // デフォルトに設定されていた音量
+    private var defaultSoundVolume = 0
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             if (ContextCompat.checkSelfPermission(
@@ -75,6 +94,56 @@ class MainActivity : AppCompatActivity() {
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setGestureDetector()
+
+        if (allPermissionsGranted()) {
+            startCamera()
+        } else {
+            requestPermissionLauncher.launch(REQUEST_PERMISSIONS)
+        }
+        cameraXExecutors = Executors.newSingleThreadExecutor()
+
+        setButtonListener()
+
+        initSoundPool()
+
+        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        defaultSoundVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+    }
+
+    private fun initSoundPool() {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
+
+        soundPool = SoundPool.Builder()
+            .setAudioAttributes(audioAttributes)
+            .setMaxStreams(3).build()
+
+        takePictureSound = soundPool.load(this, R.raw.take_picture_sound, 1)
+        captureVideoStartSound = soundPool.load(this, R.raw.capture_video_start_sound, 2)
+        captureVideoEndSound = soundPool.load(this, R.raw.capture_video_end_sound, 3)
+    }
+
+    private fun setButtonListener() {
+        binding.executeButton.setOnClickListener {
+            if (selectedCameraMode == CameraMode.Photo) {
+                takePicture()
+            } else {
+                captureVideo()
+            }
+        }
+
+        binding.cameraModeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            selectedCameraMode = if (isChecked) {
+                CameraMode.Video
+            } else {
+                CameraMode.Photo
+            }
+        }
+    }
+
+    private fun setGestureDetector() {
         gestureDetector =
             GestureDetectorCompat(this, object : GestureDetector.SimpleOnGestureListener() {
                 override fun onFling(
@@ -94,30 +163,6 @@ class MainActivity : AppCompatActivity() {
                     return super.onFling(e1, e2, velocityX, velocityY)
                 }
             })
-
-        if (allPermissionsGranted()) {
-            startCamera()
-        } else {
-            requestPermissionLauncher.launch(REQUEST_PERMISSIONS)
-        }
-
-        binding.executeButton.setOnClickListener {
-            if (selectedCameraMode == CameraMode.Photo) {
-                takePicture()
-            } else {
-                captureVideo()
-            }
-        }
-
-        binding.cameraModeSwitch.setOnCheckedChangeListener { _, isChecked ->
-            selectedCameraMode = if (isChecked) {
-                CameraMode.Video
-            } else {
-                CameraMode.Photo
-            }
-        }
-
-        cameraXExecutors = Executors.newSingleThreadExecutor()
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -129,6 +174,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         _binding = null
         cameraXExecutors.shutdown()
+        soundPool.release()
     }
 
     private fun allPermissionsGranted() = REQUEST_PERMISSIONS.all {
@@ -201,17 +247,21 @@ class MainActivity : AppCompatActivity() {
         val imageCapture = this.imageCapture ?: return
         val outputOptions = createPhotoOutputOptions()
 
+        playSound()
+
         imageCapture.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(this),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exception: ImageCaptureException) {
                     Log.e("SimpleCamera", "Photo capture failed: ${exception.message}", exception)
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
                 }
 
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     val message = "Photo capture succeeded: ${outputFileResults.savedUri}"
                     Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
                     Log.e("SimpleCamera", message)
                 }
             }
@@ -252,6 +302,8 @@ class MainActivity : AppCompatActivity() {
 
         val mediaStoreOutputOptions = createVideoOutputOptions()
 
+        playSound()
+
         recording = videoCapture.output.prepareRecording(this, mediaStoreOutputOptions).also {
             if (ContextCompat.checkSelfPermission(
                     this@MainActivity,
@@ -269,6 +321,9 @@ class MainActivity : AppCompatActivity() {
 
                 is VideoRecordEvent.Finalize -> {
                     binding.executeButton.setBackgroundColor(getColor(R.color.photo_mode))
+
+                    soundPool.play(captureVideoEndSound, 1.0f, 1.0f, 1, 0, 1.0f)
+
                     if (recordEvent.hasError()) {
                         recording?.close()
                         recording = null
@@ -283,6 +338,8 @@ class MainActivity : AppCompatActivity() {
                             .show()
                         Log.e("SimpleCamera", message)
                     }
+
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
                 }
             }
         }
@@ -305,6 +362,16 @@ class MainActivity : AppCompatActivity() {
         )
             .setContentValues(contentValues)
             .build()
+    }
+
+    private fun playSound() {
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 13, 0)
+
+        if (selectedCameraMode == CameraMode.Photo) {
+            soundPool.play(takePictureSound, 1.0f, 1.0f, 0, 0, 1.0f)
+        } else {
+            soundPool.play(captureVideoStartSound, 1.0f, 1.0f, 1, 0, 1.0f)
+        }
     }
 
     companion object {
