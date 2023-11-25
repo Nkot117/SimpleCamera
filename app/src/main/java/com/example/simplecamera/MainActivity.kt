@@ -73,6 +73,9 @@ class MainActivity : AppCompatActivity() {
     // デフォルトに設定されていた音量
     private var defaultSoundVolume = 0
 
+    // 録画実行中フラグ
+    private var isRecording = false
+    
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             if (ContextCompat.checkSelfPermission(
@@ -154,7 +157,7 @@ class MainActivity : AppCompatActivity() {
                 ): Boolean {
                     val distance = e1?.x?.minus(e2.x)?.toInt() ?: 0
 
-                    if (Math.abs(distance) <= SWIPE_EVENT_MIN_DISTANCE) {
+                    if (Math.abs(distance) <= SWIPE_EVENT_MIN_DISTANCE || isRecording) {
                         return true
                     }
 
@@ -317,10 +320,14 @@ class MainActivity : AppCompatActivity() {
             when (recordEvent) {
                 is VideoRecordEvent.Start -> {
                     binding.executeButton.setBackgroundColor(getColor(R.color.video_mode))
+                    isRecording = true
+                    binding.cameraModeSwitch.isEnabled = false
                 }
 
                 is VideoRecordEvent.Finalize -> {
                     binding.executeButton.setBackgroundColor(getColor(R.color.photo_mode))
+                    isRecording = false
+                    binding.cameraModeSwitch.isEnabled = true
 
                     soundPool.play(captureVideoEndSound, 1.0f, 1.0f, 1, 0, 1.0f)
 
