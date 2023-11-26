@@ -1,8 +1,8 @@
 package com.example.simplecamera
 
 import android.content.ContentValues
+import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
@@ -80,6 +80,9 @@ class MainActivity : AppCompatActivity() {
     // 録画実行中フラグ
     private var isRecording = false
 
+    // 最新のサムネイルのURI
+    private var latestThumbnailUri: Uri? = null
+
     private val requestPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
                 if (ContextCompat.checkSelfPermission(
@@ -147,6 +150,16 @@ class MainActivity : AppCompatActivity() {
             } else {
                 CameraMode.Photo
             }
+        }
+
+        binding.thumbnailView.setOnClickListener {
+            val mimeType = contentResolver.getType(latestThumbnailUri
+                    ?: return@setOnClickListener) ?: return@setOnClickListener
+            val intent = Intent(Intent.ACTION_VIEW).also {
+                it.setDataAndType(latestThumbnailUri, mimeType)
+                it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            }
+            startActivity(intent)
         }
     }
 
@@ -379,11 +392,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setImageThumbnail(url: Uri) {
+        latestThumbnailUri = url
         binding.thumbnailView.setImageURI(url)
         binding.thumbnailView.visibility = VISIBLE
     }
 
     private fun setVideoThumbnail(url: Uri) {
+        latestThumbnailUri = url
         val retriever = MediaMetadataRetriever().also {
             it.setDataSource(this, url)
         }
