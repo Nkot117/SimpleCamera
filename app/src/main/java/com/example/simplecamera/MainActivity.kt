@@ -2,9 +2,12 @@ package com.example.simplecamera
 
 import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.MediaMetadataRetriever
 import android.media.SoundPool
+import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -12,6 +15,7 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -262,10 +266,11 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                        val message = "Photo capture succeeded: ${outputFileResults.savedUri}"
-                        Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
-                        Log.e("SimpleCamera", message)
+
+                        outputFileResults.savedUri?.let {
+                            setImageThumbnail(it)
+                        }
                     }
                 }
         )
@@ -334,16 +339,8 @@ class MainActivity : AppCompatActivity() {
                     if (recordEvent.hasError()) {
                         recording?.close()
                         recording = null
-                        Log.e(
-                                "SimpleCamera", "Video capture ends with error: " +
-                                "${recordEvent.error}"
-                        )
                     } else {
-                        val message = "Video capture succeeded: " +
-                                "${recordEvent.outputResults.outputUri}"
-                        Toast.makeText(this, message, Toast.LENGTH_SHORT)
-                                .show()
-                        Log.e("SimpleCamera", message)
+                        setVideoThumbnail(recordEvent.outputResults.outputUri)
                     }
 
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
@@ -378,6 +375,27 @@ class MainActivity : AppCompatActivity() {
             soundPool.play(takePictureSound, 1.0f, 1.0f, 0, 0, 1.0f)
         } else {
             soundPool.play(captureVideoStartSound, 1.0f, 1.0f, 1, 0, 1.0f)
+        }
+    }
+
+    private fun setImageThumbnail(url: Uri) {
+        binding.galleryView.setImageURI(url)
+        binding.galleryView.visibility = VISIBLE
+    }
+
+    private fun setVideoThumbnail(url: Uri) {
+        val retriever = MediaMetadataRetriever().also {
+            it.setDataSource(this, url)
+        }
+
+        val getFlameTime = 1000L
+        val frameBitmap = retriever.getFrameAtTime(getFlameTime, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+
+        retriever.release()
+
+        if (frameBitmap != null) {
+            binding.galleryView.setImageBitmap(frameBitmap)
+            binding.galleryView.visibility = VISIBLE
         }
     }
 
