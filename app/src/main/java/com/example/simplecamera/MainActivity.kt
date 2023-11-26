@@ -379,8 +379,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setImageThumbnail(url: Uri) {
-        binding.galleryView.setImageURI(url)
-        binding.galleryView.visibility = VISIBLE
+        binding.thumbnailView.setImageURI(url)
+        binding.thumbnailView.visibility = VISIBLE
     }
 
     private fun setVideoThumbnail(url: Uri) {
@@ -394,8 +394,8 @@ class MainActivity : AppCompatActivity() {
         retriever.release()
 
         if (frameBitmap != null) {
-            binding.galleryView.setImageBitmap(frameBitmap)
-            binding.galleryView.visibility = VISIBLE
+            binding.thumbnailView.setImageBitmap(frameBitmap)
+            binding.thumbnailView.visibility = VISIBLE
         }
     }
 
