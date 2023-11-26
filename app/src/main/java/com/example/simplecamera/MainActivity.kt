@@ -388,8 +388,18 @@ class MainActivity : AppCompatActivity() {
             android.Manifest.permission.CAMERA,
             android.Manifest.permission.RECORD_AUDIO
         ).also {
+            // Android 10 以下の場合、外部ストレージへのアクセス権限が必要
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
                 it.add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+
+            // Android 12 以下の場合、READ_EXTERNAL_STORAGE が必要
+            // Android 13 以上の場合、READ_MEDIA_IMAGES と READ_MEDIA_VIDEO が必要
+            if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+                it.add(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+            } else {
+                it.add(android.Manifest.permission.READ_MEDIA_IMAGES)
+                it.add(android.Manifest.permission.READ_MEDIA_VIDEO)
             }
         }.toTypedArray()
     }
