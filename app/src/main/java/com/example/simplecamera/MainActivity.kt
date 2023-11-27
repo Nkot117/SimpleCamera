@@ -39,6 +39,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
     // ViewBinding
@@ -103,22 +104,24 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         setGestureDetector()
+        cameraXExecutors = Executors.newSingleThreadExecutor()
+        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        defaultSoundVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+
+        initSoundPool()
+    }
+
+    override fun onResume() {
+        super.onResume()
 
         if (allPermissionsGranted()) {
             startCamera()
         } else {
             requestPermissionLauncher.launch(REQUEST_PERMISSIONS)
         }
-        cameraXExecutors = Executors.newSingleThreadExecutor()
 
         setButtonListener()
-
-        initSoundPool()
-
-        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        defaultSoundVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
     }
 
     private fun initSoundPool() {
@@ -174,7 +177,7 @@ class MainActivity : AppCompatActivity() {
                 ): Boolean {
                     val distance = e1?.x?.minus(e2.x)?.toInt() ?: 0
 
-                    if (Math.abs(distance) <= SWIPE_EVENT_MIN_DISTANCE || isRecording) {
+                    if (abs(distance) <= SWIPE_EVENT_MIN_DISTANCE || isRecording) {
                         return true
                     }
 
