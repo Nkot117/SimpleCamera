@@ -84,20 +84,20 @@ class MainActivity : AppCompatActivity() {
     private var latestThumbnailUri: Uri? = null
 
     private val requestPermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-                if (ContextCompat.checkSelfPermission(
-                                this,
-                                android.Manifest.permission.CAMERA
-                        ) == PackageManager.PERMISSION_GRANTED
-                ) {
-                    // カメラの権限が許可が取れている場合、カメラ機能を開始
-                    startCamera()
-                } else {
-                    // TODO: ダイアログで表示する
-                    Toast.makeText(this, "アプリの使用にはカメラの権限の許可が必要です", Toast.LENGTH_LONG).show()
-                    finish()
-                }
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                // カメラの権限が許可が取れている場合、カメラ機能を開始
+                startCamera()
+            } else {
+                // TODO: ダイアログで表示する
+                Toast.makeText(this, "アプリの使用にはカメラの権限の許可が必要です", Toast.LENGTH_LONG).show()
+                finish()
             }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -123,12 +123,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun initSoundPool() {
         val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
 
         soundPool = SoundPool.Builder()
-                .setAudioAttributes(audioAttributes)
-                .setMaxStreams(3).build()
+            .setAudioAttributes(audioAttributes)
+            .setMaxStreams(3).build()
 
         takePictureSound = soundPool.load(this, R.raw.take_picture_sound, 1)
         captureVideoStartSound = soundPool.load(this, R.raw.capture_video_start_sound, 2)
@@ -154,7 +154,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.thumbnailView.setOnClickListener {
             val mimeType = contentResolver.getType(latestThumbnailUri
-                    ?: return@setOnClickListener) ?: return@setOnClickListener
+                ?: return@setOnClickListener) ?: return@setOnClickListener
             val intent = Intent(Intent.ACTION_VIEW).also {
                 it.setDataAndType(latestThumbnailUri, mimeType)
                 it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
@@ -165,24 +165,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun setGestureDetector() {
         gestureDetector =
-                GestureDetectorCompat(this, object : GestureDetector.SimpleOnGestureListener() {
-                    override fun onFling(
-                            e1: MotionEvent?, // e1 ： フリック開始座標（起点）
-                            e2: MotionEvent,  // e2 ： 現在のフリック座標
-                            velocityX: Float, // velocityX ： 横方向の加速度
-                            velocityY: Float  // velocityY ： 縦方向の加速度
-                    ): Boolean {
-                        val distance = e1?.x?.minus(e2.x)?.toInt() ?: 0
+            GestureDetectorCompat(this, object : GestureDetector.SimpleOnGestureListener() {
+                override fun onFling(
+                    e1: MotionEvent?, // e1 ： フリック開始座標（起点）
+                    e2: MotionEvent,  // e2 ： 現在のフリック座標
+                    velocityX: Float, // velocityX ： 横方向の加速度
+                    velocityY: Float  // velocityY ： 縦方向の加速度
+                ): Boolean {
+                    val distance = e1?.x?.minus(e2.x)?.toInt() ?: 0
 
-                        if (Math.abs(distance) <= SWIPE_EVENT_MIN_DISTANCE || isRecording) {
-                            return true
-                        }
-
-                        changeCameraMode(distance)
-
-                        return super.onFling(e1, e2, velocityX, velocityY)
+                    if (Math.abs(distance) <= SWIPE_EVENT_MIN_DISTANCE || isRecording) {
+                        return true
                     }
-                })
+
+                    changeCameraMode(distance)
+
+                    return super.onFling(e1, e2, velocityX, velocityY)
+                }
+            })
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -199,8 +199,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun allPermissionsGranted() = REQUEST_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(
-                this@MainActivity,
-                it
+            this@MainActivity,
+            it
         ) == PackageManager.PERMISSION_GRANTED
     }
 
@@ -211,23 +211,23 @@ class MainActivity : AppCompatActivity() {
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
             val preview = Preview.Builder()
-                    .build()
-                    .also {
-                        it.setSurfaceProvider(binding.preview.surfaceProvider)
-                    }
+                .build()
+                .also {
+                    it.setSurfaceProvider(binding.preview.surfaceProvider)
+                }
 
             // TODO: 撮影時のオプションを検討
             imageCapture = ImageCapture.Builder()
-                    .build()
+                .build()
 
             val recorder = Recorder.Builder()
-                    .setQualitySelector(
-                            QualitySelector.from(
-                                    Quality.HIGHEST,
-                                    FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
-                            )
+                .setQualitySelector(
+                    QualitySelector.from(
+                        Quality.HIGHEST,
+                        FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
                     )
-                    .build()
+                )
+                .build()
             videoCapture = VideoCapture.withOutput(recorder)
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -238,11 +238,11 @@ class MainActivity : AppCompatActivity() {
 
                 // ライフサイクルにカメラをバインド
                 cameraProvider.bindToLifecycle(
-                        this,
-                        cameraSelector,
-                        preview,
-                        imageCapture,
-                        videoCapture
+                    this,
+                    cameraSelector,
+                    preview,
+                    imageCapture,
+                    videoCapture
                 )
             } catch (exception: Exception) {
                 Log.e("SimpleCamera", "Use case binding failed", exception)
@@ -270,29 +270,29 @@ class MainActivity : AppCompatActivity() {
         playSound()
 
         imageCapture.takePicture(
-                outputOptions,
-                ContextCompat.getMainExecutor(this),
-                object : ImageCapture.OnImageSavedCallback {
-                    override fun onError(exception: ImageCaptureException) {
-                        Log.e("SimpleCamera", "Photo capture failed: ${exception.message}", exception)
-                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
-                    }
+            outputOptions,
+            ContextCompat.getMainExecutor(this),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exception: ImageCaptureException) {
+                    Log.e("SimpleCamera", "Photo capture failed: ${exception.message}", exception)
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
+                }
 
-                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
 
-                        outputFileResults.savedUri?.let {
-                            setImageThumbnail(it)
-                        }
+                    outputFileResults.savedUri?.let {
+                        setImageThumbnail(it)
                     }
                 }
+            }
         )
     }
 
     private fun createPhotoOutputOptions(): ImageCapture.OutputFileOptions {
         val name = SimpleDateFormat(
-                FILENAME_FORMAT,
-                Locale.getDefault()
+            FILENAME_FORMAT,
+            Locale.getDefault()
         ).format(System.currentTimeMillis())
 
         val contentValue = ContentValues().also {
@@ -304,9 +304,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         return ImageCapture.OutputFileOptions.Builder(
-                contentResolver,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValue
+            contentResolver,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            contentValue
         ).build()
     }
 
@@ -327,9 +327,9 @@ class MainActivity : AppCompatActivity() {
 
         recording = videoCapture.output.prepareRecording(this, mediaStoreOutputOptions).also {
             if (ContextCompat.checkSelfPermission(
-                            this@MainActivity,
-                            android.Manifest.permission.RECORD_AUDIO
-                    ) == PackageManager.PERMISSION_GRANTED
+                    this@MainActivity,
+                    android.Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
             ) {
                 // 録音を有効化
                 it.withAudioEnabled()
@@ -364,7 +364,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun createVideoOutputOptions(): MediaStoreOutputOptions {
         val name =
-                SimpleDateFormat(FILENAME_FORMAT, Locale.JAPAN).format(System.currentTimeMillis())
+            SimpleDateFormat(FILENAME_FORMAT, Locale.JAPAN).format(System.currentTimeMillis())
         val contentValues = ContentValues().also {
             it.put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             it.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
@@ -374,11 +374,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         return MediaStoreOutputOptions.Builder(
-                contentResolver,
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            contentResolver,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
         )
-                .setContentValues(contentValues)
-                .build()
+            .setContentValues(contentValues)
+            .build()
     }
 
     private fun playSound() {
@@ -418,8 +418,8 @@ class MainActivity : AppCompatActivity() {
         private const val SWIPE_EVENT_MIN_DISTANCE = 100
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private val REQUEST_PERMISSIONS = mutableListOf(
-                android.Manifest.permission.CAMERA,
-                android.Manifest.permission.RECORD_AUDIO
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.RECORD_AUDIO
         ).also {
             // Android 10 以下の場合、外部ストレージへのアクセス権限が必要
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
