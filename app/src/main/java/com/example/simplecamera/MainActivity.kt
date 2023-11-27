@@ -1,10 +1,13 @@
 package com.example.simplecamera
 
 import android.content.ContentValues
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.MediaMetadataRetriever
 import android.media.SoundPool
+import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -12,6 +15,7 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -35,6 +39,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
     // ViewBinding
@@ -75,7 +80,10 @@ class MainActivity : AppCompatActivity() {
 
     // 録画実行中フラグ
     private var isRecording = false
-    
+
+    // 最新のサムネイルのURI
+    private var latestThumbnailUri: Uri? = null
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             if (ContextCompat.checkSelfPermission(
@@ -96,22 +104,24 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         setGestureDetector()
+        cameraXExecutors = Executors.newSingleThreadExecutor()
+        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        defaultSoundVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+
+        initSoundPool()
+    }
+
+    override fun onResume() {
+        super.onResume()
 
         if (allPermissionsGranted()) {
             startCamera()
         } else {
             requestPermissionLauncher.launch(REQUEST_PERMISSIONS)
         }
-        cameraXExecutors = Executors.newSingleThreadExecutor()
 
         setButtonListener()
-
-        initSoundPool()
-
-        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        defaultSoundVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
     }
 
     private fun initSoundPool() {
@@ -144,6 +154,16 @@ class MainActivity : AppCompatActivity() {
                 CameraMode.Photo
             }
         }
+
+        binding.thumbnailView.setOnClickListener {
+            val mimeType = contentResolver.getType(latestThumbnailUri
+                ?: return@setOnClickListener) ?: return@setOnClickListener
+            val intent = Intent(Intent.ACTION_VIEW).also {
+                it.setDataAndType(latestThumbnailUri, mimeType)
+                it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            }
+            startActivity(intent)
+        }
     }
 
     private fun setGestureDetector() {
@@ -157,7 +177,7 @@ class MainActivity : AppCompatActivity() {
                 ): Boolean {
                     val distance = e1?.x?.minus(e2.x)?.toInt() ?: 0
 
-                    if (Math.abs(distance) <= SWIPE_EVENT_MIN_DISTANCE || isRecording) {
+                    if (abs(distance) <= SWIPE_EVENT_MIN_DISTANCE || isRecording) {
                         return true
                     }
 
@@ -262,10 +282,11 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    val message = "Photo capture succeeded: ${outputFileResults.savedUri}"
-                    Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
-                    Log.e("SimpleCamera", message)
+
+                    outputFileResults.savedUri?.let {
+                        setImageThumbnail(it)
+                    }
                 }
             }
         )
@@ -334,16 +355,8 @@ class MainActivity : AppCompatActivity() {
                     if (recordEvent.hasError()) {
                         recording?.close()
                         recording = null
-                        Log.e(
-                            "SimpleCamera", "Video capture ends with error: " +
-                                    "${recordEvent.error}"
-                        )
                     } else {
-                        val message = "Video capture succeeded: " +
-                                "${recordEvent.outputResults.outputUri}"
-                        Toast.makeText(this, message, Toast.LENGTH_SHORT)
-                            .show()
-                        Log.e("SimpleCamera", message)
+                        setVideoThumbnail(recordEvent.outputResults.outputUri)
                     }
 
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultSoundVolume, 0)
@@ -381,6 +394,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setImageThumbnail(url: Uri) {
+        latestThumbnailUri = url
+        binding.thumbnailView.setImageURI(url)
+        binding.thumbnailView.visibility = VISIBLE
+    }
+
+    private fun setVideoThumbnail(url: Uri) {
+        latestThumbnailUri = url
+        val retriever = MediaMetadataRetriever().also {
+            it.setDataSource(this, url)
+        }
+
+        val getFlameTime = 1000L
+        val frameBitmap = retriever.getFrameAtTime(getFlameTime, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+
+        retriever.release()
+
+        if (frameBitmap != null) {
+            binding.thumbnailView.setImageBitmap(frameBitmap)
+            binding.thumbnailView.visibility = VISIBLE
+        }
+    }
+
     companion object {
         private const val SWIPE_EVENT_MIN_DISTANCE = 100
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
@@ -388,8 +424,18 @@ class MainActivity : AppCompatActivity() {
             android.Manifest.permission.CAMERA,
             android.Manifest.permission.RECORD_AUDIO
         ).also {
+            // Android 10 以下の場合、外部ストレージへのアクセス権限が必要
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
                 it.add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+
+            // Android 12 以下の場合、READ_EXTERNAL_STORAGE が必要
+            // Android 13 以上の場合、READ_MEDIA_IMAGES と READ_MEDIA_VIDEO が必要
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+                it.add(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+            } else {
+                it.add(android.Manifest.permission.READ_MEDIA_IMAGES)
+                it.add(android.Manifest.permission.READ_MEDIA_VIDEO)
             }
         }.toTypedArray()
     }

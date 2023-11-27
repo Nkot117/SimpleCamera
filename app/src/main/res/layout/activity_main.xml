@@ -33,27 +33,25 @@
         android:id="@+id/execute_button"
         android:layout_width="70dp"
         android:layout_height="80dp"
-        android:layout_marginBottom="50dp"
         android:layout_marginTop="15dp"
+        android:layout_marginBottom="50dp"
         android:backgroundTint="@color/photo_mode"
         app:cornerRadius="60dp"
-        app:layout_constraintStart_toStartOf="@id/button_area"
-        app:layout_constraintTop_toTopOf="@id/button_area"
         app:layout_constraintEnd_toEndOf="@id/button_area"
-        />
+        app:layout_constraintStart_toStartOf="@id/button_area"
+        app:layout_constraintTop_toTopOf="@id/button_area" />
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/camera_mode_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:switchMinWidth="130dp"
         android:layout_marginBottom="25dp"
         android:thumb="@drawable/switch_camera_thumb"
-        app:track="@drawable/switch_camera_track"
         app:layout_constraintBottom_toBottomOf="@+id/button_area"
-        app:layout_constraintStart_toStartOf="@id/button_area"
         app:layout_constraintEnd_toEndOf="@+id/button_area"
-        />
+        app:layout_constraintStart_toStartOf="@id/button_area"
+        app:switchMinWidth="130dp"
+        app:track="@drawable/switch_camera_track" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/vertical_center_line"
@@ -61,5 +59,16 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         app:layout_constraintGuide_percent=".50" />
+
+    <ImageView
+        android:id="@+id/thumbnail_view"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginBottom="25dp"
+        android:contentDescription="@string/gallery"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
