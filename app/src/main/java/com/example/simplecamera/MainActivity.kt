@@ -130,7 +130,7 @@ class MainActivity : AppCompatActivity() {
 
         setButtonListener()
 
-        val dialog = CustomDialog()
+        val dialog = CustomDialog.create("カメラの権限を許可してください", "設定画面へ", "終了する")
         dialog.show(supportFragmentManager, "test")
     }
 

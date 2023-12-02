@@ -14,8 +14,24 @@ class CustomDialog : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         _binding = FragmentCustomDialogBinding.inflate(layoutInflater)
         val dialog = Dialog(requireContext())
-        dialog.setContentView(R.layout.fragment_custom_dialog)
+        dialog.setContentView(binding.root)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        binding.dialogText.text = arguments?.getString("dialogText")
+        binding.primaryButton.text = arguments?.getString("primaryButtonText")
+        binding.secondaryButton.text = arguments?.getString("secondaryButtonText")
         return dialog
+    }
+
+    companion object {
+        fun create(dialogText: String, primaryButtonText: String, secondaryButtonText: String?): CustomDialog {
+            val args = Bundle()
+            args.putString("dialogText", dialogText)
+            args.putString("primaryButtonText", primaryButtonText)
+            args.putString("secondaryButtonText", secondaryButtonText)
+            val dialog = CustomDialog().also {
+                it.arguments = args
+            }
+            return dialog
+        }
     }
 }

@@ -10,4 +10,6 @@
     <color name="photo_mode">#7C7C7C</color>
     <color name="video_mode">#C64D4D</color>
 
+    <!-- ダイアログ -->
+    <color name="colorDialogText">#000000</color>
 </resources>
