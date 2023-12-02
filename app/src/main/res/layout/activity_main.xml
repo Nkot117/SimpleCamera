@@ -33,13 +33,13 @@
         android:id="@+id/execute_button"
         android:layout_width="70dp"
         android:layout_height="80dp"
-        android:layout_marginTop="15dp"
-        android:layout_marginBottom="50dp"
         android:backgroundTint="@color/photo_mode"
         app:cornerRadius="60dp"
+        android:layout_marginTop="15dp"
+        android:contentDescription="@string/execute_button"
         app:layout_constraintEnd_toEndOf="@id/button_area"
         app:layout_constraintStart_toStartOf="@id/button_area"
-        app:layout_constraintTop_toTopOf="@id/button_area" />
+        app:layout_constraintTop_toTopOf="@+id/button_area" />
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/camera_mode_switch"
@@ -64,11 +64,22 @@
         android:id="@+id/thumbnail_view"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_marginEnd="15dp"
-        android:layout_marginBottom="25dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginStart="15dp"
         android:contentDescription="@string/gallery"
         android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toStartOf="@id/button_area"
+        app:layout_constraintTop_toTopOf="@+id/button_area" />
+
+    <ImageView
+        android:id="@+id/switch_camera_button"
+        android:layout_width="65dp"
+        android:layout_height="65dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginTop="15dp"
+        android:contentDescription="@string/camera_switch_button"
+        android:src="@drawable/icon_switch"
+        app:layout_constraintEnd_toEndOf="@id/button_area"
+        app:layout_constraintTop_toTopOf="@+id/button_area" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
