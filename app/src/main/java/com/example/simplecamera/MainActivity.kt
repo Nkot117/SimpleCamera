@@ -34,6 +34,7 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import com.example.simplecamera.databinding.ActivityMainBinding
+import com.google.common.util.concurrent.ListenableFuture
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -100,6 +101,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    // カメラのプロバイダー
+    private lateinit var cameraProviderFuture: ListenableFuture<ProcessCameraProvider>
+
+    // カメラのセレクター
+    private var currentCameraSelector: CameraSelector? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
@@ -164,6 +171,10 @@ class MainActivity : AppCompatActivity() {
             }
             startActivity(intent)
         }
+
+        binding.switchCameraButton.setOnClickListener {
+            setCamera()
+        }
     }
 
     private fun setGestureDetector() {
@@ -208,7 +219,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        setCamera()
+    }
+
+    private fun setCamera() {
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         cameraProviderFuture.addListener({
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
@@ -233,7 +248,13 @@ class MainActivity : AppCompatActivity() {
                 .build()
             videoCapture = VideoCapture.withOutput(recorder)
 
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            val cameraSelector = if (currentCameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+                currentCameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+                CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                currentCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                CameraSelector.DEFAULT_BACK_CAMERA
+            }
 
             try {
                 // カメラがバインドされている場合、バインドを解除
