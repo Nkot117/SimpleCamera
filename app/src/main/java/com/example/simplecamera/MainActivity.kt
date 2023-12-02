@@ -129,6 +129,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         setButtonListener()
+
+        val dialog = CustomDialog()
+        dialog.show(supportFragmentManager, "test")
     }
 
     private fun initSoundPool() {

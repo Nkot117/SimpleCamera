@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#263238</color>
+    <color name="colorPrimary">#AED6D0</color>
     <color name="colorPrimaryVariant">#546E7A</color>
     <color name="colorOnPrimary">#FFFFFF</color>
     <color name="colorSecondary">#004D40</color>
@@ -9,4 +9,5 @@
     <!-- カメラ機能関連 -->
     <color name="photo_mode">#7C7C7C</color>
     <color name="video_mode">#C64D4D</color>
+
 </resources>
