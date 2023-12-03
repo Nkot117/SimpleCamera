@@ -96,9 +96,23 @@ class MainActivity : AppCompatActivity() {
                 // カメラの権限が許可が取れている場合、カメラ機能を開始
                 startCamera()
             } else {
-                // TODO: ダイアログで表示する
-                Toast.makeText(this, "アプリの使用にはカメラの権限の許可が必要です", Toast.LENGTH_LONG).show()
-                finish()
+                CustomDialogManager.show(this,
+                    "permissionDialog",
+                    "カメラの権限を許可してください",
+                    "設定画面へ",
+                    "終了する",
+                    primaryButtonFunction = {
+                        Log.d("DEBUG_TAG", "設定画面へボタンタップ")
+                        val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            .setData(Uri.parse("package:$packageName"))
+                        startActivity(intent)
+                        finish()
+                    },
+                    secondaryButtonFunction = {
+                        Log.d("DEBUG_TAG", "終了するボタンタップ")
+                        finish()
+                    }
+                )
             }
         }
 
@@ -118,31 +132,17 @@ class MainActivity : AppCompatActivity() {
         defaultSoundVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
 
         initSoundPool()
-    }
-
-    override fun onResume() {
-        super.onResume()
 
         if (allPermissionsGranted()) {
             startCamera()
         } else {
             requestPermissionLauncher.launch(REQUEST_PERMISSIONS)
         }
+    }
 
+    override fun onResume() {
+        super.onResume()
         setButtonListener()
-
-        CustomDialogManager.show(this,
-            "permissionDialog",
-            "カメラの権限を許可してください",
-            "設定画面へ",
-            "終了する",
-            primaryButtonFunction = {
-                Log.d("DEBUG_TAG", "設定画面へボタンタップ")
-            },
-            secondaryButtonFunction = {
-                Log.d("DEBUG_TAG", "終了するボタンタップ")
-            }
-        )
     }
 
     private fun initSoundPool() {
