@@ -1,4 +1,4 @@
-package com.example.simplecamera
+package com.example.simplecamera.dialog
 
 import android.app.Dialog
 import android.graphics.Color
@@ -23,7 +23,7 @@ class CustomDialog : DialogFragment() {
     }
 
     companion object {
-        fun create(dialogText: String, primaryButtonText: String, secondaryButtonText: String?): CustomDialog {
+        fun newInstance(dialogText: String, primaryButtonText: String, secondaryButtonText: String?): CustomDialog {
             val args = Bundle()
             args.putString("dialogText", dialogText)
             args.putString("primaryButtonText", primaryButtonText)

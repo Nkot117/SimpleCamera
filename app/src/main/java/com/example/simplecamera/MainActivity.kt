@@ -34,6 +34,7 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import com.example.simplecamera.databinding.ActivityMainBinding
+import com.example.simplecamera.dialog.CustomDialogManager
 import com.google.common.util.concurrent.ListenableFuture
 import java.lang.Exception
 import java.text.SimpleDateFormat
@@ -130,8 +131,7 @@ class MainActivity : AppCompatActivity() {
 
         setButtonListener()
 
-        val dialog = CustomDialog.create("カメラの権限を許可してください", "設定画面へ", "終了する")
-        dialog.show(supportFragmentManager, "test")
+        CustomDialogManager.show(this,"カメラの権限を許可してください", "設定画面へ", "終了する", "permissionDialog")
     }
 
     private fun initSoundPool() {
