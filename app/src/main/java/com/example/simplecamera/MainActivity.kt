@@ -131,7 +131,18 @@ class MainActivity : AppCompatActivity() {
 
         setButtonListener()
 
-        CustomDialogManager.show(this,"カメラの権限を許可してください", "設定画面へ", "終了する", "permissionDialog")
+        CustomDialogManager.show(this,
+            "permissionDialog",
+            "カメラの権限を許可してください",
+            "設定画面へ",
+            "終了する",
+            primaryButtonFunction = {
+                Log.d("DEBUG_TAG", "設定画面へボタンタップ")
+            },
+            secondaryButtonFunction = {
+                Log.d("DEBUG_TAG", "終了するボタンタップ")
+            }
+        )
     }
 
     private fun initSoundPool() {
