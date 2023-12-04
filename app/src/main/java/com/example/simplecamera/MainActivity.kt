@@ -97,10 +97,10 @@ class MainActivity : AppCompatActivity() {
                 startCamera()
             } else {
                 CustomDialogManager.show(this,
-                    "permissionDialog",
-                    "カメラの権限を許可してください",
-                    "設定画面へ",
-                    "終了する",
+                    TAG_DIALOG_PERMISSION,
+                    getString(R.string.permission_dialog_text),
+                    getString(R.string.permission_dialog_go_to_setting),
+                    getString(R.string.permission_dialog_finish),
                     primaryButtonFunction = {
                         Log.d("DEBUG_TAG", "設定画面へボタンタップ")
                         val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
@@ -473,5 +473,6 @@ class MainActivity : AppCompatActivity() {
                 it.add(android.Manifest.permission.READ_MEDIA_VIDEO)
             }
         }.toTypedArray()
+        private const val TAG_DIALOG_PERMISSION = "permissionDialog"
     }
 }

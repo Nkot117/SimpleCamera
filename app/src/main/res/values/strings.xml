@@ -6,4 +6,7 @@
     <string name="end_video">録画を終了</string>
     <string name="gallery">ギャラリー</string>
     <string name="camera_switch_button">カメラ切り替えボタン</string>
+    <string name="permission_dialog_text">カメラの権限が許可されていません。設定画面から権限を許可してください。</string>
+    <string name="permission_dialog_go_to_setting">設定画面へ</string>
+    <string name="permission_dialog_finish">アプリを終了する</string>
 </resources>
