@@ -34,6 +34,7 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import com.example.simplecamera.databinding.ActivityMainBinding
+import com.example.simplecamera.dialog.CustomDialogManager
 import com.google.common.util.concurrent.ListenableFuture
 import java.lang.Exception
 import java.text.SimpleDateFormat
@@ -95,9 +96,23 @@ class MainActivity : AppCompatActivity() {
                 // カメラの権限が許可が取れている場合、カメラ機能を開始
                 startCamera()
             } else {
-                // TODO: ダイアログで表示する
-                Toast.makeText(this, "アプリの使用にはカメラの権限の許可が必要です", Toast.LENGTH_LONG).show()
-                finish()
+                CustomDialogManager.show(this,
+                    TAG_DIALOG_PERMISSION,
+                    getString(R.string.permission_dialog_text),
+                    getString(R.string.permission_dialog_go_to_setting),
+                    getString(R.string.permission_dialog_finish),
+                    primaryButtonFunction = {
+                        Log.d("DEBUG_TAG", "設定画面へボタンタップ")
+                        val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            .setData(Uri.parse("package:$packageName"))
+                        startActivity(intent)
+                        finish()
+                    },
+                    secondaryButtonFunction = {
+                        Log.d("DEBUG_TAG", "終了するボタンタップ")
+                        finish()
+                    }
+                )
             }
         }
 
@@ -117,17 +132,16 @@ class MainActivity : AppCompatActivity() {
         defaultSoundVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
 
         initSoundPool()
-    }
-
-    override fun onResume() {
-        super.onResume()
 
         if (allPermissionsGranted()) {
             startCamera()
         } else {
             requestPermissionLauncher.launch(REQUEST_PERMISSIONS)
         }
+    }
 
+    override fun onResume() {
+        super.onResume()
         setButtonListener()
     }
 
@@ -459,5 +473,6 @@ class MainActivity : AppCompatActivity() {
                 it.add(android.Manifest.permission.READ_MEDIA_VIDEO)
             }
         }.toTypedArray()
+        private const val TAG_DIALOG_PERMISSION = "permissionDialog"
     }
 }
